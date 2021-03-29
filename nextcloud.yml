@@ -1,0 +1,16 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - system
+    - fail2ban
+    - php
+    - security
+    - nginx
+    - lets-encrypt
+    - mariadb
+    - redis
+    - docker
+    - onlyoffice
+    - nextcloud
+    - crontab

@@ -1,0 +1,86 @@
+---
+- name: check if php:remi module is enabled
+  command: dnf module list php --enabled
+  register: php_module
+  ignore_errors: yes
+  no_log: true
+
+- name: enable php:remi module
+  command: 'dnf module enable php:remi-{{ php_version }} -y'
+  when: '"remi-{{ php_version }} [e]" not in php_module.stdout'
+
+- name: install deps
+  package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - php
+    - php-cli
+    - php-fpm
+    - php-curl
+    - php-common
+    - php-gd
+    - php-json
+    - php-mbstring
+    - php-xml
+    - php-intl
+    - php-pecl-apcu
+    - php-redis
+    - php-opcache
+    - php-pecl-imagick
+    - php-gmp
+    - php-bcmath
+    - php-bz2
+    - php-pecl-zip
+    - php-mysqlnd
+    - php-pear
+    #- php-smbclient
+    #- php-imap
+    #- php-ldap
+
+- name: ensure php-fpm is running
+  service:
+    name: php-fpm
+    state: started
+    enabled: yes
+
+- name: configure php
+  template:
+    src: "{{ item.file }}.j2"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+    force: true
+    backup: true
+  loop:
+    - { file: 'fpm.php.ini',  dest: '/etc/php.ini' }
+    - { file: 'cli.php.ini',  dest: '/etc/php-cli.ini' }
+    - { file: 'www.conf',     dest: '/etc/php-fpm.d/www.conf' }
+    - { file: 'php-fpm.conf', dest: '/etc/php-fpm.conf' }
+  notify: restart php-fpm
+
+- name: correct ownership /var/lib/php
+  file:
+    name: "{{ item.name }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode:  0770
+  loop: 
+    - { owner: nginx, group: nginx, name: /var/lib/php/session }
+    - { owner: root, group: nginx, name: /var/lib/php/wsdlcache }
+    - { owner: root, group: nginx, name: /var/lib/php/opcache }
+
+- name: replace opcache.max_accelerated_files=4000
+  lineinfile:
+    path: /etc/php.d/10-opcache.ini
+    regexp: '^opcache.max_accelerated_files=(.*)'
+    line:   'opcache.max_accelerated_files=10000'
+    backup: true
+  notify: restart php-fpm
+
+- name: restart php-fpm
+  service:
+    name: php-fpm
+    state: restarted

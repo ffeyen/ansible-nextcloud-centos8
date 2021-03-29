@@ -1,0 +1,28 @@
+---
+- name: start a onlyoffice container
+  docker_container:
+    name: onlyoffice
+    image: onlyoffice/documentserver
+    container_default_behavior: compatibility
+    state: started
+    restart: yes
+    restart_policy: always
+    pull: true
+    interactive: true
+    tty: yes
+    ports: "9443:443"
+    env:
+      ONLYOFFICE_HTTPS_HSTS_ENABLED: "{% if (config_ssl == false) %}false{% else %}true{% endif %}"
+      USE_UNAUTHORIZED_STORAGE: "{% if (config_ssl == false) %}true{% else %}false{% endif %}"
+      JWT_ENABLED:  'true'
+      JWT_SECRET:   "{{ secrets.onlyoffice_jwt }}"
+    volumes:
+    - "/etc/letsencrypt/live/{{ inventory_hostname }}/privkey.pem:/var/www/onlyoffice/Data/certs/onlyoffice.key:ro"
+    - "/etc/letsencrypt/live/{{ inventory_hostname }}/cert.pem:/var/www/onlyoffice/Data/certs/onlyoffice.crt:ro"
+    - "/etc/letsencrypt/live/{{ inventory_hostname }}/fullchain.pem:/var/www/onlyoffice/Data/certs/ca-certificates.pem:ro"
+    - "/etc/ssl/dhparam.pem:/var/www/onlyoffice/Data/certs/dhparam.pem:ro"
+
+- name: prune container and images
+  docker_prune:
+    containers: true
+    images: true

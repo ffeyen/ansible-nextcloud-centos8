@@ -1,0 +1,109 @@
+# link to secrets in ansible-vault
+secrets: '{{ vault }}'
+
+# php version to use
+php_version: '7.4'
+
+# nginx parameter
+config_ssl: true
+letsencrypt_email: 'mail@domain.tld'
+config_hsts: true # Read about HSTS before activating this option
+nginx_resolver: ''
+
+# mariadb parameter
+db_name: dbname
+db_user: dbuser
+
+# nextcloud parameter
+nextcloud_archive: 'https://download.nextcloud.com/server/releases/latest.tar.bz2'
+nextcloud_admin_user: nextcloud
+nextcloud_data_dir: '/var/nextcloud'
+
+# nextcloud smtp settings
+nextcloud_mail_smtpport: '587'
+nextcloud_mail_smtpmode: 'smtp'
+nextcloud_mail_from_address: 'mailfrom'
+nextcloud_mail_domain: 'domain.tld'
+nextcloud_mail_smtpauthtype: 'LOGIN'
+nextcloud_mail_smtphost: 'smtp.domain.tld'
+nextcloud_mail_smtpsecure: 'tls'
+nextcloud_mail_smtpauth: 1
+nextcloud_mail_smtpname: 'authname'
+
+
+# nextcloud disable and enable apps
+nextcloud_apps_disable: 
+  - survey_client
+  - support
+
+nextcloud_apps_install:
+  - accessibility
+  - activity
+  - admin_audit
+  - announcementcenter
+  - apporder
+  - audioplayer
+  - audioplayer_editor
+  - bruteforcesettings
+  - calendar
+  - camerarawpreviews
+  - checksum
+  - cloud_federation_api
+  - comments
+  - contacts
+  - contactsinteraction
+  - dashboard
+  - dav
+  - deck
+  - drawio
+  - encryption
+  - extract
+  - federatedfilesharing
+  - federation
+  - files
+  - files_external
+  - files_markdown
+  - files_mindmap
+  - files_pdfviewer
+  - files_retention
+  - files_rightclick
+  - files_sharing
+  - files_trashbin
+  - files_versions
+  - files_videoplayer
+  - firstrunwizard
+  - forms
+  - integration_github
+  - logreader
+  - lookup_server_connector
+  - metadata
+  - nextcloud_announcements
+  - notes
+  - notifications
+  - oauth2
+  - onlyoffice
+  - ownbackup
+  - password_policy
+  - passwords
+  - photos
+  - piwik
+  - previewgenerator
+  - privacy
+  - provisioning_api
+  - ransomware_protection
+  - recommendations
+  - serverinfo
+  - settings
+  - sharebymail
+  - systemtags
+  - tasks
+  - text
+  - theming
+  - theming_customcss
+  - twofactor_backupcodes
+  - twofactor_u2f
+  - updatenotification
+  - user_status
+  - viewer
+  - weather_status
+  - workflowengine

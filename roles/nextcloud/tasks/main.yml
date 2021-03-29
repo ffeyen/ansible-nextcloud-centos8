@@ -1,0 +1,167 @@
+---
+- name: install needed centos8 packages
+  yum:
+    name:
+      - GraphicsMagick
+      - policycoreutils-python-utils
+      - ghostscript
+    state: latest
+    enablerepo: epel
+
+- name: create nextcloud data directory
+  file:
+    path: "{{ nextcloud_data_dir }}"
+    state: directory
+    owner: nginx
+    group: nginx
+
+- name: download nextcloud archive
+  get_url:
+    url: "{{ nextcloud_archive }}"
+    dest: /tmp/nextcloud.tar.bz2
+    checksum: "sha256:{{ nextcloud_archive }}.sha256"
+
+- name: unarchive nextcloud
+  unarchive:
+    src: /tmp/nextcloud.tar.bz2
+    dest: /var/www
+    remote_src: true
+    owner: nginx
+    group: nginx
+    mode: o-rwx
+    creates: /var/www/nextcloud/
+
+- name: check if config.php exists
+  stat:
+    path: "/var/www/nextcloud/config/config.php"
+  register: config_php
+
+- name: run nextcloud occ maintenance:install with initial parameters
+  become_user: nginx
+  become: yes
+  shell: >
+    php occ maintenance:install
+    --database mysql
+    --database-host 'localhost:3306'
+    --database-name {{ db_name }}
+    --database-user {{ db_user }}
+    --database-pass {{ secrets.db_password_user }}
+    --admin-user {{ nextcloud_admin_user }}
+    --admin-pass {{ secrets.nextcloud_admin_password }}
+    --data-dir {{ nextcloud_data_dir }}
+  args:
+    chdir: /var/www/nextcloud
+  when: not config_php.stat.exists
+
+- name: config nextcloud via templating config.php
+  template:
+    src: config.php.j2
+    dest: /var/www/nextcloud/config/config.php
+    owner: nginx
+    group: nginx
+    mode: "0640"
+
+- name: backup jobs, upgrade apps and database tuning
+  become_user: nginx
+  become: yes
+  shell: php occ {{ item }}
+  args:
+    chdir: /var/www/nextcloud/
+  loop:
+    - background:cron
+    - upgrade
+    - db:add-missing-indices
+    - db:convert-filecache-bigint
+    - app:update --all
+
+- name: selinux targets
+  sefcontext:
+    target: "{{ item }}"
+    setype: httpd_sys_rw_content_t
+    state: present
+  loop:
+    - "{{ nextcloud_data_dir }}(/.*)?"
+    - "/var/www/nextcloud/config(/.*)?"
+    - "/var/www/nextcloud/apps(/.*)?"
+    - "/var/www/nextcloud/assets(/.*)?"
+    - /var/www/nextcloud/.htaccess
+    - /var/www/nextcloud/.user.ini
+
+- name: restorecon
+  command: restorecon -Rv {{ item }}
+  loop:
+    - "/tmp"
+    - "/var/www/nextcloud"
+    - "{{ nextcloud_data_dir }}"
+    - "{{ nextcloud_data_dir }}/nextcloud.log"
+
+- name: install onlyoffice app
+  become_user: nginx
+  become: yes
+  shell: php occ app:install onlyoffice
+  args:
+    chdir: "/var/www/nextcloud/"
+    creates: "/var/www/nextcloud//apps/onlyoffice"
+  ignore_errors: true
+
+- name: enable onlyoffice app
+  become_user: nginx
+  become: yes
+  shell: php occ app:enable onlyoffice
+  args:
+    chdir: "/var/www/nextcloud/"
+
+- name: set onlyoffice server url
+  become_user: nginx
+  become: yes
+  shell: php occ config:app:set onlyoffice DocumentServerUrl --value https://{{ inventory_hostname }}:9443
+  args:
+    chdir: "/var/www/nextcloud/"
+
+- name: set onlyoffice server secret
+  become_user: nginx
+  become: yes
+  shell: php occ config:app:set onlyoffice jwt_secret --value {{ secrets.onlyoffice_jwt }}
+  args:
+    chdir: "/var/www/nextcloud/"
+
+- name: disable nextcloud apps
+  become: yes
+  become_user: nginx
+  command: "php /var/www/nextcloud/occ app:disable {{ item }}"
+  with_items: "{{ nextcloud_apps_disable }}"
+
+- name: get installed apps
+  become: yes
+  become_user: nginx
+  command: "php /var/www/nextcloud/occ app:list"
+  register: nextcloud_apps_installed
+
+- name: install nextcloud apps
+  become: yes
+  become_user: nginx
+  command: "php /var/www/nextcloud/occ app:install {{ item }}"
+  ignore_errors: yes
+  with_items: "{{ nextcloud_apps_install }}"
+  when: not nextcloud_apps_installed.stdout.find('{{ item }}')
+
+- name: enable installed nextcloud apps
+  become: yes
+  become_user: nginx
+  command: "php /var/www/nextcloud/occ app:enable {{ item }}"
+  with_items: "{{ nextcloud_apps_install }}"
+  ignore_errors: yes
+
+- name: update all nextcloud apps
+  become: yes
+  become_user: nginx
+  command: "php /var/www/nextcloud/occ app:update --all"
+
+- name: add nextcloud cronjob to update all apps once a day
+  cron:
+    name: nextcloud update all apps
+    minute: "0"
+    hour: "4"
+    day: "*"
+    user: nginx
+    job: "php -f /var/www/nextcloud/occ app:update --all"

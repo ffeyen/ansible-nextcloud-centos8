@@ -1,0 +1,93 @@
+---
+- name: selinux setsebool settings
+  seboolean:
+    name: "{{ item }}"
+    state: yes
+    persistent: yes
+  with_items:
+    - httpd_can_network_connect
+    - httpd_unified
+  when: ansible_selinux.status == "enabled"
+
+- name: enable and start firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: allow services (firewalld)
+  ansible.posix.firewalld:
+    service: "{{ item.name }}"
+    state: enabled
+    permanent: yes
+    immediate: yes
+    zone: "{{ item.zone }}"
+  with_items:
+    - { name: http, zone: public }
+    - { name: https, zone: public }
+  notify: reload firewall
+
+- name: open firewall ports
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    state: enabled
+    permanent: yes
+    immediate: yes
+  with_items:
+    - "9443/tcp"
+    - "6379/tcp"
+
+- name: selinux targets
+  sefcontext:
+    target: "{{ item }}"
+    setype: httpd_sys_rw_content_t
+    state: present
+  loop: 
+    - '/tmp(/.*)?'
+
+- name: setfacl -R -m u:nginx:rwx
+  command: setfacl -R -m u:nginx:rwx {{ item }}
+  loop:
+    - /var/lib/php/opcache/
+    - /var/lib/php/session/
+    - /var/lib/php/wsdlcache/
+
+- name: enable seboolean settings
+  command: setsebool -P {{ item }} on
+  loop:
+    - httpd_can_sendmail
+    - httpd_unified
+    - httpd_graceful_shutdown
+    - httpd_can_network_relay
+    - httpd_can_network_connect
+    - httpd_can_network_connect_db
+    - daemons_enable_cluster_mode
+    - httpd_execmem
+
+- name: copy semodule policy files to remote host
+  copy: 
+    src: '{{ item }}'
+    dest: /tmp
+    owner: root
+    group: root
+    mode: 0640
+  with_items:
+    - httpd-to-php-fpm.pp
+    - httpd-to-redis-socket.pp
+    - httpd-to-upload-tmp.pp
+    - fail2ban-server.pp
+
+- name: semodule settings
+  command: semodule -i /tmp/{{ item }}
+  #command: semodule -i {{ item }}
+  loop:
+    - httpd-to-php-fpm.pp
+    - httpd-to-redis-socket.pp
+    - httpd-to-upload-tmp.pp
+    - fail2ban-server.pp
+
+- name: restorecon 
+  command: restorecon -Rv {{ item }}
+  loop:
+    - '/tmp'
+    

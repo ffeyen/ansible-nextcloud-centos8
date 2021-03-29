@@ -1,0 +1,11 @@
+vault:
+  db_password_root: password_root
+  db_password_user: password_user
+  redis_password: password_redis
+  onlyoffice_jwt: onlyoffice_token
+
+  nextcloud_admin_password: nc_admin_password
+  nextcloud_instanceid: # leave empty for new installation
+  nextcloud_passwordsalt: # leave empty for new installation
+  nextcloud_secret: # leave empty for new installation
+  nextcloud_smtp_password: smtp_password

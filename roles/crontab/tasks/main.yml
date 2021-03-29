@@ -1,0 +1,40 @@
+---
+- name: add nextcloud cronjob
+  cron:
+    name: nextcloud cronjob
+    minute: "*/15"
+    user: nginx
+    job: "php -f /var/www/nextcloud/cron.php"
+
+- name: run nextcloud cronjob
+  become_user: nginx
+  become: yes
+  shell: php -f /var/www/nextcloud/cron.php
+  args:
+    chdir: /var/www/nextcloud
+
+- name: copy scripts to /usr/local/bin
+  copy:
+    src: "{{ item }}"
+    dest: /usr/local/bin
+  with_items:
+    - "update-nextcloud.sh"
+    - "update-onlyoffice-container.sh"
+
+- name: add nextcloud update cronjob
+  cron:
+    name: update nextcloud
+    job: "sudo bash /usr/local/bin/update-nextcloud.sh"
+    minute: "15"
+    hour: "4"
+    month: "*"
+    user: "root"
+
+- name: add update onlyoffice docker container cronjob
+  cron:
+    name: update onlyoffice docker container
+    job: "sudo bash /usr/local/bin/update-onlyoffice-container.sh"
+    minute: "45"
+    hour: "4"
+    month: "*"
+    user: "root"

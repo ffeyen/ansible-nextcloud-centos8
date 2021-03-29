@@ -1,0 +1,9 @@
+- name: add docker0 interface to docker zone
+  ansible.posix.firewalld:
+    zone: trusted
+    interface: docker0
+    permanent: yes
+    state: enabled
+  notify:
+    - restart firewalld
+    - restart docker
