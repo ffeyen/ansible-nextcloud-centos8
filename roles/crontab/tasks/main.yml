@@ -2,7 +2,7 @@
 - name: add nextcloud cronjob
   cron:
     name: nextcloud cronjob
-    minute: "*/15"
+    minute: "*/5"
     user: nginx
     job: "php -f /var/www/nextcloud/cron.php"
 
@@ -18,13 +18,13 @@
     src: "{{ item }}"
     dest: /usr/local/bin
   with_items:
-    - "update-nextcloud.sh"
+    - "upgrade-nextcloud.sh"
     - "update-onlyoffice-container.sh"
 
-- name: add nextcloud update cronjob
+- name: add nextcloud upgrade cronjob
   cron:
-    name: update nextcloud
-    job: "sudo bash /usr/local/bin/update-nextcloud.sh"
+    name: upgrade nextcloud
+    job: "sudo bash /usr/local/bin/upgrade-nextcloud.sh"
     minute: "15"
     hour: "4"
     month: "*"
