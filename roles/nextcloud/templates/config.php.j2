@@ -11,6 +11,12 @@ $CONFIG = [
     0 => '{{ inventory_hostname }}',
     1 => '{{ inventory_hostname }}:9443',
   ),
+  'trusted_proxies' =>
+  array (
+    0 => '127.0.0.1',
+    1 => '::1',
+    2 => '2a03:4000:45:587:c8f4:e9ff:fe49:ddfd',
+  ),
   'default_language' => 'de',
   'default_locale' => 'de_DE',
   'theme' => '',
@@ -41,7 +47,8 @@ $CONFIG = [
     'timeout' => 0.0,
     'password' => '{{ secrets.redis_password }}',
   ),
-  'loglevel' => 0,
+  'debug' => false,
+  'loglevel' => 2,
   'log_type' => 'file',
   'logfile' => '',
   'logfilemode' => 416,

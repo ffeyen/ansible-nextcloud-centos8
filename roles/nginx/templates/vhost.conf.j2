@@ -1,9 +1,11 @@
 upstream php-handler {
   server unix:/var/run/php-fpm/php7.4-fpm.sock;
+  keepalive 32;
 }
 
 upstream onlyoffice-docker {
   server 127.0.0.1:9443;
+  keepalive 32;
 }
 
 server {
@@ -106,13 +108,10 @@ server {
   location ^~ /.well-known {
     # The following 6 rules are borrowed from `.htaccess`
 
-    rewrite ^/\.well-known/host-meta\.json  /public.php?service=host-meta-json  last;
-    rewrite ^/\.well-known/host-meta        /public.php?service=host-meta       last;
-    rewrite ^/\.well-known/webfinger        /public.php?service=webfinger       last;
-    rewrite ^/\.well-known/nodeinfo         /public.php?service=nodeinfo        last;
-
     location = /.well-known/carddav     { return 301 /remote.php/dav/; }
     location = /.well-known/caldav      { return 301 /remote.php/dav/; }
+    # Anything else is dynamically handled by Nextcloud
+    location ^~ /.well-known            { return 301 /index.php$uri; }
 
     try_files $uri $uri/ =404;
   }
@@ -158,6 +157,15 @@ server {
 
   location / {
       try_files $uri $uri/ /index.php$request_uri;
+  }
+
+  location /push/ {
+    proxy_pass http://127.0.0.1:7867/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
   }
 
 {% if config_ssl %}
