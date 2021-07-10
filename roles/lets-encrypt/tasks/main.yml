@@ -27,7 +27,7 @@
 - name: add cron job for certbot renewalbrück
   cron:
     name: Certbot automatic renewal.
-    job: "certbot renew --quiet"
+    job: "sudo /usr/bin/certbot renew --quiet"
     minute: "0"
     hour: "4"
     month: "*"
