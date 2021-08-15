@@ -38,3 +38,15 @@
     hour: "4"
     month: "*"
     user: "root"
+
+# Hacky fix for php7.4-fpm.service failed to start aber php upgrade
+# because of wrong logfile permissions.
+# https://bugs.php.net/bug.php?id=80498
+- name: add remove /var/log/php7.4-fpm.log cronjob
+  cron:
+    name: remove /var/log/php7.4-fpm.log to fix php-fpm.service issue
+    job: "sudo rm /var/log/php7.4-fpm.log"
+    minute: "45"
+    hour: "6"
+    month: "*"
+    user: "root"

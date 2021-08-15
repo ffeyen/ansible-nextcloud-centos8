@@ -30,8 +30,8 @@ function check_daycount()
     sudo -u $WEBUSER $PHP $NEXTCLOUD_ROOT/occ db:convert-filecache-bigint --no-interaction
     daycounter=0
   else
-    echo "NC_UPGRADE: Skipping Nextcloud upgrade ($daycounter/$DAYCOUNT_UNTIL_UPDATE)."
     let daycounter=daycounter+1
+    echo "NC_UPGRADE: Skipping Nextcloud upgrade ($daycounter/$DAYCOUNT_UNTIL_UPDATE)."
   fi
   echo "$daycounter" > "./daycountfile"
 }
