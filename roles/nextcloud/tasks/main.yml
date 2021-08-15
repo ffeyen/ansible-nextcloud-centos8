@@ -157,15 +157,6 @@
   become_user: nginx
   command: "php /var/www/nextcloud/occ app:update --all"
 
-- name: add nextcloud cronjob to update all apps once a day
-  cron:
-    name: nextcloud update all apps
-    minute: "0"
-    hour: "4"
-    day: "*"
-    user: nginx
-    job: "php -f /var/www/nextcloud/occ app:update --all"
-
 - name: copy notify_push.service
   become: yes
   template:
