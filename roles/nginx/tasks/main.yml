@@ -17,8 +17,8 @@
   stat:
     path: '{{ item }}'
   with_items:
-    - '/etc/letsencrypt/live/{{ inventory_hostname }}/fullchain.pem'
-    - '/etc/letsencrypt/live/{{ inventory_hostname }}/privkey.pem'
+    - '/etc/letsencrypt/live/eastfrisia.org/fullchain.pem'
+    - '/etc/letsencrypt/live/eastfrisia.org/privkey.pem'
   register: ssl_cert_exist
 
 - name: copy nginx configuration

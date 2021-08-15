@@ -37,7 +37,7 @@ $CONFIG = [
   'dbuser' => '{{ db_user }}',
   'dbpassword' => '{{ secrets.db_password_user }}',
   'mysql.utf8mb4' => true,
-  'memcache.local' => '\\OC\\Memcache\\APCu',
+  #'memcache.local' => '\\OC\\Memcache\\APCu',
   'memcache.distributed' => '\\OC\\Memcache\\Redis',
   'memcache.locking' => '\\OC\\Memcache\\Redis',
   'redis' => 
@@ -120,4 +120,5 @@ $CONFIG = [
   ),
   'encryption.legacy_format_support' => false,
   'encryption.key_storage_migrated' => false,
+  'default_phone_region' => 'DE',
 ];
